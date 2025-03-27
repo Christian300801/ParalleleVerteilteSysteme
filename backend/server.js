@@ -1,19 +1,17 @@
-// Importiere Fastify und setze die Fastify-Instanz auf
 const Fastify = require('fastify');
 const fastify = Fastify({
   logger: true
 });
+const cors = require('@fastify/cors');
 
-const fs = require('fs');
-
-// Die OpenAPI-Spezifikation aus der JSON-Datei laden
-const openApiSpec = require('./REST_API.json'); // Pfad zur rest_api.json
-
-
-
+fastify.register(cors, {
+  origin: "http://localhost:3001", // Erlaubte Frontend-URL
+  methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+});
 
 
-// In-Memory-Datenbank für Demo-Zwecke
+
 let items = [
   { id: 1, name: 'Apples', quantity: 5 },
   { id: 2, name: 'Bread', quantity: 2 },
@@ -47,7 +45,6 @@ fastify.get('/items/:itemId', async (request, reply) => {
 fastify.post('/items', async (request, reply) => {
   const { name, quantity } = request.body;
   
-  // Basisvalidierung
   if (!name || typeof quantity !== 'number') {
     return reply.status(400).send({ message: 'Name is required and quantity must be a number' });
   }
@@ -77,7 +74,6 @@ fastify.put('/items/:itemId', async (request, reply) => {
   const itemId = parseInt(request.params.itemId);
   const { name, quantity } = request.body;
   
-  // Basisvalidierung
   if (!name || typeof quantity !== 'number') {
     return reply.status(400).send({ message: 'Name is required and quantity must be a number' });
   }
@@ -88,19 +84,16 @@ fastify.put('/items/:itemId', async (request, reply) => {
     return reply.status(404).send({ message: 'Item not found' });
   }
 
-  // Überprüfen, ob ein Item mit dem neuen Namen existiert (aber nicht das aktuelle Item)
   const existingItemWithSameName = items.find(item => 
     item.name.toLowerCase() === name.toLowerCase() && item.id !== itemId
   );
   
   if (existingItemWithSameName) {
-    // Wenn der Name geändert wird, aber bereits existiert, kombinieren wir die Mengen und löschen dieses Item
     existingItemWithSameName.quantity += quantity;
     items.splice(itemIndex, 1);
     return reply.status(200).send(existingItemWithSameName);
   }
   
-  // Normale Aktualisierung, wenn keine Namenskonflikte bestehen
   items[itemIndex] = {
     id: itemId,
     name,
