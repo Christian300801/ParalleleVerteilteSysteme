@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 // Die URL des Fastify-Backends
-const API_URL = 'http://localhost:3000/items';
-
+const API_URL = process.env.REACT_APP_API_URL + '/items';
 // Alle Artikel holen
 export const getItems = async () => {
   try {
