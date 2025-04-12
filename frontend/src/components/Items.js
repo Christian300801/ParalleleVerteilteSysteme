@@ -12,7 +12,7 @@ const Items = () => {
         setItems(data);
       } else {
         console.error('Erhaltene Daten sind kein Array:', data);
-        setItems([]); // Leeres Array setzen, falls die Antwort kein Array ist
+        setItems([]); 
       }
     };
   

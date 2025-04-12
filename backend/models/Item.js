@@ -1,26 +1,24 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
-const Item = require('./models/Item');  // Dein Item-Modell
+const Item = require('./models/Item');  
 
-const apiData = JSON.parse(fs.readFileSync('openapi.json', 'utf-8'));  // Lade die OpenAPI-Datei
+const apiData = JSON.parse(fs.readFileSync('REST_API.json', 'utf-8'));  
 
 const items = [];
 
-// Extrahiere Artikel-Informationen
 if (apiData.paths && apiData.paths['/items'] && apiData.paths['/items'].post && apiData.paths['/items'].post.requestBody && apiData.paths['/items'].post.requestBody.content['application/json'].schema) {
   const itemData = apiData.paths['/items'].post.requestBody.content['application/json'].schema.properties;
 
   if (itemData.name && itemData.quantity) {
     items.push({
-      name: itemData.name.example,  // Beispielname: "Bananas"
-      quantity: itemData.quantity.example  // Beispielmenge: 5
+      name: itemData.name.example,  
+      quantity: itemData.quantity.example  
     });
   }
 }
 
 console.log('Extrahierte Artikel:', items);
 
-// Füge die Artikel in die MongoDB-Datenbank ein
 mongoose.connect('mongodb://mongo:27017/mydatabase')
   .then(async () => {
     try {

@@ -6,11 +6,11 @@ services:
     build:
       context: ./backend
     ports:
-      - "8000:80"  # außen 8000 → Container-Port 80
+      - "8000:80"  
     volumes:
       - ./backend:/app
     environment:
-      - MONGO_URI=mongodb://mongo:27017/  # Verbindung zu MongoDB im Container
+      - MONGO_URI=mongodb://mongo:27017/  
     networks:
       - app-net
     depends_on:
@@ -21,18 +21,23 @@ services:
     build:
       context: ./frontend
     ports:
-      - "5001:80"  # außen 5001 → Container-Port 80
+      - "5001:80"  
     networks:
       - app-net
     environment:
-      - REACT_APP_API_URL=http://backend:8000  # Verbindung zum Backend über den Service-Namen
+      - REACT_APP_API_URL=http://backend:80 
 
   mongo:
     image: mongo
     ports:
       - "27017:27017"
+    volumes:
+      - mongo-data:/data/db  
     networks:
       - app-net
 
 networks:
   app-net:
+
+volumes:
+  mongo-data:  
