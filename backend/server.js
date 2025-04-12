@@ -1,136 +1,98 @@
 const Fastify = require('fastify');
-const fastify = Fastify({
-  logger: true
-});
+const fastify = Fastify({ logger: true });
+const mongoose = require('mongoose');
 const cors = require('@fastify/cors');
 
+// CORS aktivieren
 fastify.register(cors, {
-  origin: "http://localhost:3001", // Erlaubte Frontend-URL
+  origin: ["http://localhost:3000", "http://localhost:5001", "http://frontend:5001"], // Korrigiere die CORS-Optionen
   methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 
-
-let items = [
-  { id: 1, name: 'Apples', quantity: 5 },
-  { id: 2, name: 'Bread', quantity: 2 },
-  { id: 3, name: 'Milk', quantity: 1 }
-];
-
-// Hilfsfunktion, um die nächste ID zu ermitteln
-const getNextId = () => {
-  const maxId = items.reduce((max, item) => (item.id > max ? item.id : max), 0);
-  return maxId + 1;
-};
-
-// Route: GET alle Items
-fastify.get('/items', async (request, reply) => {
-  return items;
-});
-
-// Route: GET Item nach ID
-fastify.get('/items/:itemId', async (request, reply) => {
-  const itemId = parseInt(request.params.itemId);
-  const item = items.find(item => item.id === itemId);
-  
-  if (!item) {
-    return reply.status(404).send({ message: 'Item not found' });
+// Definiere das Mongoose-Modell für Item
+const itemSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true
   }
-  
-  return item;
 });
 
-// Route: POST neues Item erstellen oder existierendes Item aktualisieren
+const Item = mongoose.model('Item', itemSchema);
+
+// MongoDB-Verbindung herstellen
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/distributedSystems';
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => console.log('MongoDB connection error:', err));
+
+// Fastify-Routen
+// Beispiel für eine Route für den Root-Pfad
+fastify.get('/', async (request, reply) => {
+  return { message: 'Backend ist aktiv!' };
+});
+
+// GET: Alle Items
+fastify.get('/items', async (request, reply) => {
+  try {
+    const items = await Item.find();
+    return items;
+  } catch (err) {
+    reply.status(500).send({ message: 'Database error', err });
+  }
+});
+
+// POST: Neues Item erstellen
 fastify.post('/items', async (request, reply) => {
   const { name, quantity } = request.body;
-  
-  if (!name || typeof quantity !== 'number') {
-    return reply.status(400).send({ message: 'Name is required and quantity must be a number' });
-  }
-  
-  // Überprüfen, ob ein Item mit diesem Namen bereits existiert
-  const existingItemIndex = items.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
-  
-  if (existingItemIndex !== -1) {
-    // Aktualisiere die Menge des existierenden Items
-    items[existingItemIndex].quantity += quantity;
-    return reply.status(200).send(items[existingItemIndex]);
-  }
-  
-  // Neues Item erstellen, wenn der Name noch nicht existiert
-  const newItem = {
-    id: getNextId(),
-    name,
-    quantity
-  };
-  
-  items.push(newItem);
-  return reply.status(201).send(newItem);
-});
-
-// Route: PUT Item aktualisieren
-fastify.put('/items/:itemId', async (request, reply) => {
-  const itemId = parseInt(request.params.itemId);
-  const { name, quantity } = request.body;
-  
-  if (!name || typeof quantity !== 'number') {
-    return reply.status(400).send({ message: 'Name is required and quantity must be a number' });
-  }
-  
-  const itemIndex = items.findIndex(item => item.id === itemId);
-  
-  if (itemIndex === -1) {
-    return reply.status(404).send({ message: 'Item not found' });
-  }
-
-  const existingItemWithSameName = items.find(item => 
-    item.name.toLowerCase() === name.toLowerCase() && item.id !== itemId
-  );
-  
-  if (existingItemWithSameName) {
-    existingItemWithSameName.quantity += quantity;
-    items.splice(itemIndex, 1);
-    return reply.status(200).send(existingItemWithSameName);
-  }
-  
-  items[itemIndex] = {
-    id: itemId,
-    name,
-    quantity
-  };
-  
-  return reply.status(200).send(items[itemIndex]);
-});
-
-// Route: DELETE ein Item
-fastify.delete('/items/:itemId', async (request, reply) => {
-  const itemId = parseInt(request.params.itemId);
-  const itemIndex = items.findIndex(item => item.id === itemId);
-  
-  if (itemIndex === -1) {
-    return reply.status(404).send({ message: 'Item not found' });
-  }
-  
-  // Item entfernen
-  items.splice(itemIndex, 1);
-  
-  return reply.status(204).send();
-});
-
-
-// Server starten
-const start = async () => {
   try {
-    const port = process.env.PORT || 3000;
-    // Gebe ein Objekt mit `host` und `port` an
-    await fastify.listen({ port: port, host: '0.0.0.0' }); 
-    console.log(`Shopping API server running on port ${port}`);
+    const newItem = new Item({ name, quantity });
+    await newItem.save();
+    return reply.status(201).send(newItem);
   } catch (err) {
+    reply.status(500).send({ message: 'Error creating item', err });
+  }
+});
+
+// PUT: Ein Item aktualisieren
+fastify.put('/items/:id', async (request, reply) => {
+  const { id } = request.params;
+  const { name, quantity } = request.body;
+  try {
+    const updatedItem = await Item.findByIdAndUpdate(id, { name, quantity }, { new: true });
+    if (!updatedItem) {
+      return reply.status(404).send({ message: 'Item not found' });
+    }
+    return updatedItem;
+  } catch (err) {
+    reply.status(500).send({ message: 'Error updating item', err });
+  }
+});
+
+// DELETE: Ein Item löschen
+fastify.delete('/items/:id', async (request, reply) => {
+  const { id } = request.params;
+  try {
+    const deletedItem = await Item.findByIdAndDelete(id);
+    if (!deletedItem) {
+      return reply.status(404).send({ message: 'Item not found' });
+    }
+    return reply.status(204).send();
+  } catch (err) {
+    reply.status(500).send({ message: 'Error deleting item', err });
+  }
+});
+
+// Starte den Fastify-Server
+fastify.listen({ port: 80, host: '0.0.0.0' }, (err, address) => {
+  if (err) {
     fastify.log.error(err);
     process.exit(1);
   }
-};
-
-start();
-
+  console.log(`Server running at ${address}`);
+});

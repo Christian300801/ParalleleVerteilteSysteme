@@ -12,7 +12,7 @@ const Items = () => {
         setItems(data);
       } else {
         console.error('Erhaltene Daten sind kein Array:', data);
-        setItems([]); // Leeres Array setzen, falls die Antwort kein Array ist
+        setItems([]); 
       }
     };
   
@@ -29,7 +29,7 @@ const Items = () => {
 
   const handleDelete = async (itemId) => {
     await deleteItem(itemId);
-    setItems(items.filter(item => item.id !== itemId));
+    setItems(items.filter(item => item._id !== itemId));
   };
 
   return (
@@ -53,9 +53,9 @@ const Items = () => {
 
       <ul>
         {items.map((item) => (
-          <li key={item.id}>
+          <li key={item._id}>
             {item.name} - {item.quantity}
-            <button onClick={() => handleDelete(item.id)}>Delete</button>
+            <button onClick={() => handleDelete(item._id)}>Delete</button>
           </li>
         ))}
       </ul>
