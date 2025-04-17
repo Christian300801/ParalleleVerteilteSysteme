@@ -5,11 +5,11 @@ const API_URL = process.env.REACT_APP_API_URL + '/items';
 export const getItems = async () => {
   try {
     const response = await axios.get(API_URL);
-    console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+    console.log('REACT_APP_API_URL:', API_URL);
 
     return response.data;
   } catch (error) {
-    console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+    console.log('REACT_APP_API_URL:', API_URL);
     console.error('Fehler beim Abrufen der Artikel:', error);
   }
 };
