@@ -11,6 +11,8 @@ export const getItems = async () => {
   } catch (error) {
     console.log('REACT_APP_API_URL:', API_URL);
     console.error('Fehler beim Abrufen der Artikel:', error);
+    console.error('Fehler beim Abrufen der Artikel:', error.message, error.config?.url);
+
   }
 };
 
