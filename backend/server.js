@@ -11,20 +11,21 @@ fastify.register(cors, {
 });
 
 
-// Definiere das Mongoose-Modell für Item
 const itemSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  quantity: {
-    type: Number,
-    required: true
+  id: { type: String }, // <-- echtes id-Feld zusätzlich
+  name: { type: String, required: true },
+  quantity: { type: Number, required: true }
+});
+
+// Pre-save Hook: id = _id automatisch setzen
+itemSchema.pre('save', function (next) {
+  if (!this.id) {
+    this.id = this._id.toString();
   }
+  next();
 });
 
 const Item = mongoose.model('Item', itemSchema);
-
 // MongoDB-Verbindung herstellen
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/distributedSystems';
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -49,9 +50,9 @@ fastify.get('/items', async (request, reply) => {
 
 // POST: Neues Item erstellen
 fastify.post('/items', async (request, reply) => {
-  const { name, quantity } = request.body;
+  const { id, name, quantity } = request.body;
   try {
-    const newItem = new Item({ name, quantity });
+    const newItem = new Item({ id, name, quantity });
     await newItem.save();
     return reply.status(201).send(newItem);
   } catch (err) {
