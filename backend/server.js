@@ -88,8 +88,9 @@ fastify.delete('/items/:id', async (request, reply) => {
   }
 });
 
-// Starte den Fastify-Server
-fastify.listen({ port: 80, host: '0.0.0.0' }, (err, address) => {
+const port = process.env.PORT || 8000; // erst Umgebungsvariable PORT nehmen, sonst 8000
+
+fastify.listen({ port, host: '0.0.0.0' }, (err, address) => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);

@@ -4,17 +4,18 @@ services:
   backend:
     container_name: backend
     build:
-      context: ./backend
+      context: ./backend  # Docker baut ein eigenes Image für diesen Container
     ports:
-      - "8000:80"  
+      - "8000:80"  # hört innen auf 80, von außen auf 8000 zugreifbar
     volumes:
-      - ./backend:/app
+      - ./backend:/app    # Lokaler Ordner wird in den Container gemountet unter /app
     environment:
-      - MONGO_URI=mongodb://mongo:27017/  
+      - MONGO_URI=mongodb://mongo:27017/   # Umgebungsvariable, damit Backend weiß wie es DB erreicht
+      - PORT=80 
     networks:
       - app-net
     depends_on:
-      - mongo
+      - mongo   # Erst wen mongo gestartet dann starte backend
 
   frontend:
     container_name: frontend
@@ -37,7 +38,7 @@ services:
       - app-net
 
 networks:
-  app-net:
+  app-net:  #erstelle NW
 
 volumes:
-  mongo-data:  
+  mongo-data:  # erstelle Volumen Volumes -> Daten dauerhaft speichern auch wenn Container neugestartet wird
