@@ -1,0 +1,18 @@
+# k8s/backend-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend-pod
+  labels:
+    app: backend
+spec:
+  containers:
+    - name: backend
+      image: backend:latest
+      ports:
+        - containerPort: 8000
+      env:
+        - name: MONGO_URI
+          value: mongodb://mongo:27017/
+        - name: PORT
+          value: "8000"
