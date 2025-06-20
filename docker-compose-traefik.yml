@@ -8,11 +8,8 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      # Optional: Aktiviere Dashboard auf Port 8080
-      # - "--api.dashboard=true"
     ports:
       - "80:80"
-      # - "8080:8080"  # Dashboard bei Bedarf
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -42,7 +39,7 @@ services:
     build:
       context: ./frontend
     environment:
-      - REACT_APP_API_URL=/api  # Da Traefik /api an backend weiterleitet
+      - REACT_APP_API_URL=/api  
     networks:
       - app-net
     labels:
